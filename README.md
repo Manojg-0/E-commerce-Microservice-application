@@ -147,7 +147,7 @@ aws eks --region ap-northeast-1 update-kubeconfig --name demo-cluster
 Navigate to the microservices directory.
 
 ```bash
-cd microservices
+cd Microservices
 ```
 
 Run the build script.
