@@ -1,15 +1,3 @@
-Great 👍 I’ll give you a **more professional README (portfolio-level)** that includes:
-
-* Project banner
-* Technology badges
-* Clean sections
-* Architecture diagram
-* Clear deployment steps
-
-You can **copy this entire README** into your repo on GitHub.
-
----
-
 # E-Commerce Microservice Application on AWS EKS
 
 <p align="center">
