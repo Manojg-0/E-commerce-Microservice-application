@@ -4,7 +4,7 @@
 set -e
 
 AWS_REGION="ap-northeast-1"
-AWS_ACCOUNT_ID="329599634288"
+AWS_ACCOUNT_ID="822972071357"
 ECR_URI="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
 TAG=$(git rev-parse --short HEAD 2>/dev/null || date +%s)
 
@@ -13,11 +13,10 @@ aws ecr get-login-password --region "$AWS_REGION" \
 | docker login --username AWS --password-stdin "$ECR_URI"
 
 echo "🔹 Searching for Dockerfiles in ./src/"
-mapfile -t DOCKERFILES < <(find src -type f -name Dockerfile)
+mapfile -t DOCKERFILES < <(find Microservices -type f -name Dockerfile)
 
 if [ ${#DOCKERFILES[@]} -eq 0 ]; then
-  echo "❌ No Dockerfiles found under src/. Expected: src/<service>/Dockerfile"
-  exit 1
+  echo "❌ No Dockerfiles found under Microservices/. Expected: Microservices/<service>/Dockerfile"
 fi
 
 echo "🔹 Found ${#DOCKERFILES[@]} services."
