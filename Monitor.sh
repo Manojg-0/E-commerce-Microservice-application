@@ -39,3 +39,6 @@ echo "Grafana service info:"
 kubectl get svc -n $NAMESPACE
 
 echo "✅ Helm installation complete. Grafana is ready to use."
+
+## After running script change from cluster ip to load balancer and access Grafana using the external IP. Use admin as username and the password printed above to log in.
+# kubectl edit svc grafana-prometheus -n monitor

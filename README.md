@@ -1,230 +1,210 @@
-\
-# E-Commerce Microservice Application on AWS EKS
+## 🚀 E-Commerce Microservices Deployment on AWS EKS (Manual Setup)
 
-<p align="center">
-Cloud-native e-commerce platform deployed on Kubernetes using AWS infrastructure
-</p>
+This project demonstrates the deployment of a containerized **E-commerce microservices application** on **AWS EKS**, using **Terraform**, **Docker**, and **Kubernetes**, with a monitoring setup powered by **Prometheus and Grafana**.
 
-<p align="center">
-<img src="https://img.shields.io/badge/Cloud-AWS-orange">
-<img src="https://img.shields.io/badge/Container-Docker-blue">
-<img src="https://img.shields.io/badge/Orchestration-Kubernetes-blue">
-<img src="https://img.shields.io/badge/IaC-Terraform-purple">
-<img src="https://img.shields.io/badge/Communication-gRPC-green">
-</p>
+Unlike automated pipelines, this setup focuses on **manual deployment and operational understanding** of each component.
 
 ---
 
-# Project Overview
+## 🧩 Architecture Overview
 
-This project demonstrates how a modern **cloud-native e-commerce application** can be deployed using containerized microservices on Kubernetes.
-
-The application allows users to:
-
-* Browse products
-* Add items to a shopping cart
-* Complete checkout
-
-Each service runs inside a container and communicates with other services using **gRPC**.
-
-The infrastructure is deployed on **Amazon Web Services using
-Amazon Elastic Kubernetes Service and
-Amazon Elastic Container Registry.
-
-Infrastructure provisioning is handled using **Terraform**.
+* **Infrastructure as Code:** Terraform provisions EC2 & EKS
+* **Containerization:** Docker builds microservices
+* **Registry:** AWS ECR stores images
+* **Orchestration:** Kubernetes (EKS) manages services
+* **Monitoring:** Prometheus + Grafana via `monitor.sh`
 
 ---
 
-# Architecture
+## ⚙️ Prerequisites
 
-The application follows a **microservices architecture** where different services handle specific parts of the e-commerce workflow.
+Make sure you have:
 
-Key components include:
-
-* Frontend service
-* Product catalog service
-* Cart service
-* Checkout service
-* Payment service
-* Recommendation service
-* Redis for cart storage
-
-Each service runs in its own container and is managed by **Kubernetes**.
-
-### High Level Architecture
-
-<p align="center">
-<img src="docs/architecture.png" width="900">
-</p>
-
-All services run as containers and communicate using **gRPC**.
+* AWS Account with proper IAM permissions
+* Terraform installed
+* Docker installed
+* kubectl installed
+* AWS CLI configured
+* Helm installed
 
 ---
 
-# Infrastructure Flow
+## 🏗️ Step 1: Provision Infrastructure
 
-The deployment workflow for the application is shown below.
-
-```
-Developer
-   │
-   ▼
-Push Code to GitHub
-   │
-   ▼
-Run docker_image_buid_push.sh
-   │
-   ▼
-Docker Images Built
-   │
-   ▼
-Push Images to Amazon ECR
-   │
-   ▼
-Terraform Creates Amazon EKS Cluster
-   │
-   ▼
-Kubernetes Deployments Applied
-   │
-   ▼
-Application Running on EKS
-```
-
----
-
-# Technologies Used
-
-| Technology                        | Purpose                        |
-| --------------------------------- | ------------------------------ |
-| Docker                            | Containerization of services   |
-| Kubernetes                        | Container orchestration        |
-| Terraform                         | Infrastructure provisioning    |
-| gRPC                              | Communication between services |
-| Redis                             | Storage for shopping cart data |
-| Amazon Elastic Container Registry | Container image registry       |
-| Amazon Elastic Kubernetes Service | Managed Kubernetes cluster     |
-
----
-
-# How to Run the Project
-
-## 1. Clone the Repository
+Navigate to the Terraform folder:
 
 ```bash
-git clone https://github.com/Manojg-0/E-commerce-Microservice-application.git
-cd E-commerce-Microservice-application
-```
-
----
-
-# 2. Create the Kubernetes Cluster
-
-Navigate to the Terraform directory and create the infrastructure.
-
-```bash
-cd EKS-cluster-terraform
-
 terraform init
-terraform plan
-terraform apply
+terraform apply -auto-approve
 ```
 
-This will provision an **Amazon EKS cluster**.
+This will:
+
+* Launch EC2 instance
+* Install required tools (`userdata.sh`)
+* Create EKS cluster
 
 ---
 
-# 3. Connect to the Cluster
-
-Configure kubectl to access the cluster.
+## ☸️ Step 2: Configure kubectl
 
 ```bash
 aws eks --region ap-northeast-1 update-kubeconfig --name demo-cluster
+kubectl get nodes
 ```
 
 ---
 
-# 4. Build and Push Docker Images
+## 🐳 Step 3: Build and Push Docker Images
 
-Navigate to the microservices directory.
+Login to AWS ECR:
 
 ```bash
-cd Microservices
+aws ecr get-login-password --region ap-northeast-1 | docker login --username AWS --password-stdin <ACCOUNT_ID>.dkr.ecr.ap-northeast-1.amazonaws.com
 ```
 
-Run the build script.
+Build and push each microservice:
 
 ```bash
-./docker_image_buid_push.sh
-```
-
-This script will:
-
-* Build Docker images for all services
-* Push images to **Amazon Elastic Container Registry**
-
----
-
-# 5. Deploy the Application
-
-Deploy the Kubernetes manifests.
-
-```bash
-kubectl apply -f release/kubernetes-manifests.yaml
+docker build -t <service-name> .
+docker tag <service-name>:latest <ECR-REPO-URL>:latest
+docker push <ECR-REPO-URL>:latest
 ```
 
 ---
 
-# 6. Verify the Deployment
+## 📦 Step 4: Deploy Microservices to Kubernetes
 
-Check running pods.
+Apply Kubernetes manifests:
+
+```bash
+kubectl apply -f k8s/
+```
+
+Verify:
 
 ```bash
 kubectl get pods
-```
-
-Check services.
-
-```bash
 kubectl get svc
 ```
 
 ---
 
-# 7. Access the Application
-
-Get the external IP of the frontend service.
+## 🌐 Step 5: Access Application
 
 ```bash
 kubectl get svc frontend-external
 ```
 
-Open the **EXTERNAL-IP** in your browser.
+Open:
+
+```text
+http://<EXTERNAL-IP>
+```
 
 ---
 
-# Repository Structure
+## 📊 Step 6: Setup Monitoring (Prometheus + Grafana)
+
+Run the provided script:
+
+```bash
+chmod +x monitor.sh
+./monitor.sh
+```
+
+---
+
+## 🛠️ monitor.sh Script
+
+This script installs the monitoring stack using Helm.
+
+```bash
+#!/bin/bash
+
+# Add Helm repo
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+helm repo update
+
+# Create namespace
+kubectl create namespace monitor
+
+# Install Prometheus & Grafana stack
+helm install prometheus prometheus-community/kube-prometheus-stack \
+  --namespace monitor
+
+# Expose Grafana
+kubectl patch svc prometheus-grafana -n monitor \
+  -p '{"spec": {"type": "LoadBalancer"}}'
+
+echo "Monitoring stack deployed!"
+
+# Get Grafana URL
+kubectl get svc -n monitor prometheus-grafana
+```
+
+---
+
+## 🔐 Grafana Access
+
+Get external IP:
+
+```bash
+kubectl get svc -n monitor prometheus-grafana
+```
+
+Retrieve password:
+
+```bash
+kubectl get secret prometheus-grafana -n monitor \
+  -o jsonpath="{.data.admin-password}" | base64 --decode ; echo
+```
+
+Login:
+
+* **URL:** `http://<EXTERNAL-IP>`
+* **Username:** `admin`
+* **Password:** Retrieved from secret
+
+---
+
+## 🔍 Key Features
+
+* ✅ Manual deployment flow for better learning
+* ✅ Infrastructure provisioning using Terraform
+* ✅ Scalable Kubernetes deployment on EKS
+* ✅ Containerized microservices using Docker
+* ✅ Monitoring using Prometheus & Grafana via script
+
+---
+
+## 📁 Project Structure
 
 ```
-E-commerce-Microservice-application
-│
-├── docs
-│   └── architecture.png
-│
-├── micro-service-demo
-│
-├── EKS-cluster-terraform
-│
+.
+├── EKS-cluster-terraform/         # Infrastructure provisioning
+├── Microservices/                 # Microservices source code
+      ├── kubernetes-manifests/    # Kubernetes manifests    
+├── Monitor.sh                      # Monitoring setup script
 └── README.md
 ```
 
 ---
 
-# Summary
+## ⚠️ Notes
 
-This project demonstrates practical experience with:
+* Ensure EC2 IAM role has required permissions (EKS, ECR, EC2)
+* Monitoring stack is deployed in `monitor` namespace
+* Microservices are deployed in `default` namespace
 
-* Cloud-native application deployment
-* Containerization using Docker
-* Kubernetes orchestration
-* Infrastructure as Code using Terraform
-* AWS services such as EKS and ECR
+---
+
+## 🧠 Learning Outcome
+
+This project helps in understanding:
+
+* Kubernetes deployments and services
+* AWS EKS cluster management
+* Docker image lifecycle (build → push → deploy)
+* Monitoring setup using Prometheus and Grafana
+* End-to-end manual DevOps workflow
