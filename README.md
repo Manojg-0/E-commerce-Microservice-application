@@ -213,3 +213,5 @@ This project helps in understanding:
 * Docker image lifecycle (build → push → deploy)
 * Monitoring setup using Prometheus and Grafana
 * End-to-end manual DevOps workflow
+
+kdbjewvej
