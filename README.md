@@ -147,6 +147,11 @@ kubectl get svc -n monitor prometheus-grafana
 
 ## 🔐 Grafana Access
 
+To expose to Loadbalancer
+```bash
+kubectl edit svc grafana-prometheus -n monitor
+```
+
 Get external IP:
 
 ```bash

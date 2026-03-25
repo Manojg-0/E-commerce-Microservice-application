@@ -34,7 +34,7 @@ echo "Fetching Grafana admin password..."
 GRAFANA_PASSWORD=$(kubectl get secret grafana-prometheus -n monitor -o jsonpath="{.data.admin-password}" | base64 --decode)
 echo "Grafana admin password: $GRAFANA_PASSWORD"
 
-# 7️⃣ Show Grafana service URL
+# 7️⃣ Show Grafana service URLc
 echo "Grafana service info:"
 kubectl get svc -n $NAMESPACE
 
